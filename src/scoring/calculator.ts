@@ -1,5 +1,6 @@
 import { config } from '../utils/config';
 import { createLogger } from '../utils/logger';
+import { recordTiming } from '../utils/metrics';
 import {
   getEngagement,
   getWotTrust,
@@ -73,6 +74,7 @@ export async function scoreEvent(eventId: string): Promise<number> {
 }
 
 export async function recalculateAllScores(): Promise<number> {
+  const start = performance.now();
   const redis = getRedis();
   const trendingKey = keys.trending();
   const mostZappedKey = keys.mostZapped();
@@ -110,7 +112,9 @@ export async function recalculateAllScores(): Promise<number> {
     }
   }
 
-  log.info(`Recalculados ${count} scores`);
+  const elapsed = performance.now() - start;
+  recordTiming('recalculate_all', elapsed);
+  log.info(`Recalculados ${count} scores em ${Math.round(elapsed)}ms`);
   return count;
 }
 

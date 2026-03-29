@@ -1,8 +1,11 @@
 import express from 'express';
+import { createServer } from 'http';
 import { config } from '../utils/config';
 import { createLogger } from '../utils/logger';
 import { getTopEvents, getStats, keys, getRedis } from '../redis/client';
 import { getFollowGraph, getTrustScore } from '../wot/graph';
+import { getTimings } from '../utils/metrics';
+import { attachWsRelay } from './ws-relay';
 
 const log = createLogger('api');
 
@@ -95,6 +98,7 @@ export function startApi(): void {
           pubkeys_in_graph: graph.size,
         },
         totals: stats,
+        performance: getTimings(),
         config: {
           half_life_hours: config.scoring.halfLifeHours,
           gravity: config.scoring.gravity,
@@ -120,7 +124,13 @@ export function startApi(): void {
     res.json({ pubkey: req.params.pubkey, trust: Math.round(trust * 1000) / 1000 });
   });
 
-  app.listen(config.port, '0.0.0.0', () => {
+  const httpServer = createServer(app);
+
+  // Attach WebSocket Nostr relay em /relay
+  attachWsRelay(httpServer);
+
+  httpServer.listen(config.port, '0.0.0.0', () => {
     log.info(`API rodando em http://0.0.0.0:${config.port}`);
+    log.info(`WS Relay em ws://0.0.0.0:${config.port}/relay`);
   });
 }

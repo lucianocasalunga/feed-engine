@@ -4,6 +4,7 @@ import { setupEngagementCollector } from './collectors/engagement-collector';
 import { startScoring, stopScoring, recalculateAllScores } from './scoring/calculator';
 import { startWotEngine, stopWotEngine, processFollowList } from './wot/graph';
 import { startApi } from './api/server';
+import { startRamdiskCache, stopRamdiskCache } from './scoring/ramdisk-cache';
 import { keys, setScore, getRedis } from './redis/client';
 import { createLogger } from './utils/logger';
 
@@ -47,7 +48,10 @@ async function main(): Promise<void> {
   // 5. Primeiro calculo de scores
   await recalculateAllScores();
 
-  // 6. Iniciar API REST
+  // 6. Iniciar cache no ramdisk
+  startRamdiskCache();
+
+  // 7. Iniciar API REST + WS Relay
   startApi();
 
   log.info('Feed Engine totalmente operacional!');
@@ -58,6 +62,7 @@ async function main(): Promise<void> {
     subscriber.close();
     stopScoring();
     stopWotEngine();
+    stopRamdiskCache();
     process.exit(0);
   };
 
