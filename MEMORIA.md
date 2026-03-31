@@ -11,7 +11,7 @@
 - **Systemd:** feed-engine.service
 - **GitHub:** https://github.com/lucianocasalunga/feed-engine
 - **Ramdisk:** /mnt/projetos/feed-engine/ramdisk (4GB tmpfs)
-- **Redis:** Compartilhado com Nexus (172.29.0.2:6379), prefix `feed:`
+- **Redis:** Dedicado relay-redis (127.0.0.1:6381), prefix `feed:`
 
 ---
 
