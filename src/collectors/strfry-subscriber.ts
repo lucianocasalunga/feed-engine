@@ -2,6 +2,7 @@ import WebSocket from 'ws';
 import { config } from '../utils/config';
 import { createLogger } from '../utils/logger';
 import { EventEmitter } from 'events';
+import { cacheProfile } from '../redis/profile-cache';
 
 const log = createLogger('subscriber');
 
@@ -54,22 +55,26 @@ export class StrfrySubscriber extends EventEmitter {
     if (!this.ws) return;
 
     // Kinds que nos interessam:
+    // 0  = profile (cache Redis)
     // 1  = text note (posts + replies)
     // 6  = repost
     // 7  = reaction
     // 3  = follow list (para WoT)
     // 9735 = zap receipt
     const filter = {
-      kinds: [1, 3, 6, 7, 9735],
+      kinds: [0, 1, 3, 6, 7, 9735],
       since: Math.floor(Date.now() / 1000) - 3600, // ultima hora
     };
 
     this.ws.send(JSON.stringify(['REQ', this.subId, filter]));
-    log.info('Subscricao ativa: kinds [1, 3, 6, 7, 9735]');
+    log.info('Subscricao ativa: kinds [0, 1, 3, 6, 7, 9735]');
   }
 
   private handleEvent(event: NostrEvent): void {
     switch (event.kind) {
+      case 0:
+        cacheProfile(event).catch(() => {});
+        break;
       case 1:
         this.classifyTextNote(event);
         break;

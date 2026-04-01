@@ -7,6 +7,7 @@ import { startApi } from './api/server';
 import { startRamdiskCache, stopRamdiskCache } from './scoring/ramdisk-cache';
 import { keys, setScore, getRedis } from './redis/client';
 import { createLogger } from './utils/logger';
+import { warmupProfileCache } from './redis/profile-warmup';
 
 const log = createLogger('main');
 
@@ -53,6 +54,9 @@ async function main(): Promise<void> {
 
   // 7. Iniciar API REST + WS Relay
   startApi();
+
+  // 8. Aquecer cache de perfis (background, não bloqueia startup)
+  warmupProfileCache();
 
   log.info('Feed Engine totalmente operacional!');
 
